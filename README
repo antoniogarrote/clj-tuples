@@ -1,0 +1,51 @@
+Suppport for pattern matching in Clojure.
+
+== Installation
+
+- Set up Clojure POM (http://github.com/technomancy/clojure-pom)
+- Clone the project
+- Compile, test, install with maven:
+
+mvn process-resources ; # <- now your are ready for emacs slime
+mvn compile           ; # <- see it compile your clojure code
+mvn test              ; # <- see it test your clojure code
+mvn install           ; # <- install a jar for other components
+mvn assembly:assembly ; # <- build one big jar
+
+== Use
+
+There are two main macros for pattern matching: 'match' and 'case'.
+
+The macro 'match' accepts a pattern a value and an action, matches the pattern against the value,
+extracts the component values and executes the action form:
+
+;; (tuples/match pattern value action)
+>(tuples/match (a b (c d) e) (1 2 (3 4) 5) (+ b e))
+7
+
+
+The macro 'case' does pattern matching of several patterns and actions agains a single value:
+
+;; (tuples/case value (pattern1 action1) (pattern2 action2) ... (patternn actionn))
+>(def *test* '(:ok 2))
+>(tuples/case *test*
+              (s 1) (do (println (str "the state is not ok: " s)) s)
+              (s 2) (do (println (str "the state is ok: " s)) s)
+              t     (println (str "unknown value")))
+the state is ok: :ok
+:ok
+
+You can use symbols starting with '_' for the parts of the value you are not interested:
+
+(tuples/match (_ _ x) (1 2 3) x)
+>3
+(tuples/match (_a _b x) (1 2 3) x)
+>3
+
+== Tests
+
+There are some tests included in the tuples.clj file. You can run them with 'mvn test'
+
+== Changelog
+
+- version 0.1 (9/28/2009): First version.
