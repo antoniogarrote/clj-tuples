@@ -12,7 +12,7 @@
   <groupId>agh</groupId>
   <artifactId>clj-tuples</artifactId>
   <name>${artifactId}</name>
-  <version>0.2-SNAPSHOT</version>
+  <version>0.3-SNAPSHOT</version>
   <build>
     <plugins>
       <plugin>

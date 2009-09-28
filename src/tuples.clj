@@ -74,30 +74,44 @@
        (match-lists ~f ~value ~pc# ~@p#)
        (throw (Exception. "matching error")))))
 
+(defmacro match-maps [f value pattern & pattern-keys]
+  (if (empty? pattern-keys)
+    `~f
+    (let [k# (first pattern-keys)
+          s# (get pattern k#)
+          ks# (rest pattern-keys)
+          tmp# (gensym "mzl-")]
+      `(do (if (contains? ~value ~k#)
+             (let [~tmp# (get ~value ~k#)]
+               (match-maps (match ~s# ~tmp# ~f) ~value ~pattern ~@ks#))
+             (throw (Exception. "matching error")))))))
+
+
 ;; public API
 
 
 (defmacro match [a b f]
    "Matches values and lists acting as tuples."
    (cond
-     (symbol? a) (if (not (= \_ (.charAt (str a) 0)))
-                   `(let [~a (safe-eval (str '~a))]
-                    (if (not (= ~a :tuples/tmp_undef))
-                      (if (=~a  ~b)
-                        ~f
-                        (throw (Exception. "matching error")))
-                      (if (list? '~b)
-                        (let [~a '~b]
-                          ~f)
-                        (let [~a ~b]
-                          ~f))))
-                   `~f)
-     (list? a) `(match-lists ~f ~b (count '~a) ~@a)
-     (vector? a) `(match-vectors ~f ~b ~a)
-     true      `(if (= ~a ~b)
-                  ~f
-                  (throw (Exception. "matching error"))))
-   )
+     (symbol? a)   (if (not (= \_ (.charAt (str a) 0)))
+                     `(let [~a (safe-eval (str '~a))]
+                        (if (not (= ~a :tuples/tmp_undef))
+                          (if (=~a  ~b)
+                            ~f
+                            (throw (Exception. "matching error")))
+                          (if (list? '~b)
+                            (let [~a '~b]
+                              ~f)
+                            (let [~a ~b]
+                              ~f))))
+                     `~f)
+     (list? a)     `(match-lists ~f ~b (count '~a) ~@a)
+     (vector? a)   `(match-vectors ~f ~b ~a)
+     (map? a)      (let [ks (keys a)]
+                     `(match-maps ~f ~b ~a ~@ks))
+     true          `(if (= ~a ~b)
+                      ~f
+                      (throw (Exception. "matching error")))))
 
 
 (defmacro case [v & ps]
@@ -200,3 +214,14 @@
          (case (5 [1 2] 4)
                (4 a 5) a
                (5 [a b] 4) a))))
+
+(deftest map-match-1-test
+  (is (= 1
+         (let [m {:a 1 :b "hola"}]
+           (match {:a a :b b} m a))))
+  (is (= 1
+         (let [m {:a 1 :b "hola"}]
+           (match {:a a} m a))))
+  (is (= false
+         (try (match {:a 2} {:a 1} true)
+              (catch Exception e false)))))
