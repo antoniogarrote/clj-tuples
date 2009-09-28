@@ -48,6 +48,13 @@
     (eval (symbol str))
     :tuples/tmp_undef))
 
+(defn vector-to-list
+  ([v] (vector-to-list v '()))
+  ([v l]
+     (if (empty? v)
+       (reverse l)
+       (recur (rest v) (cons (first v) l)))))
+
 (defmacro match-lists [f value pattern-orig-size & patterns]
   (if (not (nil? patterns))
     (let [p# (first patterns)
@@ -60,6 +67,12 @@
            (match ~p# ~acum# (match-lists ~f  ~value ~pattern-orig-size ~@rp#)))))
     `~f))
 
+(defmacro match-vectors [f value pattern-vector]
+  (let [p# (vector-to-list pattern-vector)
+        pc# (count p#)]
+    `(if (vector? ~value)
+       (match-lists ~f ~value ~pc# ~@p#)
+       (throw (Exception. "matching error")))))
 
 ;; public API
 
@@ -80,10 +93,11 @@
                           ~f))))
                    `~f)
      (list? a) `(match-lists ~f ~b (count '~a) ~@a)
+     (vector? a) `(match-vectors ~f ~b ~a)
      true      `(if (= ~a ~b)
                   ~f
-                  (throw (Exception. "matching error")))
-     ))
+                  (throw (Exception. "matching error"))))
+   )
 
 
 (defmacro case [v & ps]
@@ -152,3 +166,37 @@
          (match (_ b) ((1 3) 2) b)))
     (is (= 2
            (match (_dont-care b) ((1 3) 2) b))))
+
+(deftest vector-to-list-test
+  (is (= '(1 2 3)
+         (vector-to-list [1 2 3])))
+  (is (= '()
+         (vector-to-list []))))
+
+(deftest match-vectors-simple-test
+  (is (= [1 2]
+         (match a [1 2] a)))
+  (is (= true
+         (match [1 2] [1 2] true)))
+  (is (= false
+         (try (match [2 3] [1 2] true)
+              (catch Exception e false))))
+  (is (= false
+         (try (match [1 2] (1 2) true)
+              (catch Exception e false)))))
+
+(deftest match-vectors-complex-test
+  (is (= 1
+         (match (5 [a b] 4) (5 [1 2] 4) a)))
+  (is (= 1
+         (match [5 [a b] 4] [5 [1 2] 4] a)))
+  (is (= [1 2]
+         (match (5 a 4) (5 [1 2] 4) a)))
+  (is (= [1 2]
+         (match [5 a 4] [5 [1 2] 4] a))))
+
+(deftest case-vectors-test
+  (is (= 1
+         (case (5 [1 2] 4)
+               (4 a 5) a
+               (5 [a b] 4) a))))
