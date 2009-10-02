@@ -2,7 +2,8 @@
 
 ;; Rough implementation of pattern matching for clojure
 
-(ns tuples)
+(ns tuples
+  (:import (org.clj_tuples PatternMatchException)))
 
 
 ;; Examples
@@ -70,9 +71,11 @@
 (defmacro match-vectors [f value pattern-vector]
   (let [p# (vector-to-list pattern-vector)
         pc# (count p#)]
-    `(if (vector? ~value)
-       (match-lists ~f ~value ~pc# ~@p#)
-       (throw (Exception. "matching error")))))
+    (if (list? value)
+      `(throw (PatternMatchException.))
+      `(if (vector? ~value)
+         (match-lists ~f ~value ~pc# ~@p#)
+         (throw (PatternMatchException.))))))
 
 (defmacro match-maps [f value pattern & pattern-keys]
   (if (empty? pattern-keys)
@@ -84,7 +87,7 @@
       `(do (if (contains? ~value ~k#)
              (let [~tmp# (get ~value ~k#)]
                (match-maps (match ~s# ~tmp# ~f) ~value ~pattern ~@ks#))
-             (throw (Exception. "matching error")))))))
+             (throw (PatternMatchException.)))))))
 
 
 ;; public API
@@ -98,7 +101,7 @@
                         (if (not (= ~a :tuples/tmp_undef))
                           (if (=~a  ~b)
                             ~f
-                            (throw (Exception. "matching error")))
+                            (throw (PatternMatchException.)))
                           (if (list? '~b)
                             (let [~a '~b]
                               ~f)
@@ -111,7 +114,7 @@
                      `(match-maps ~f ~b ~a ~@ks))
      true          `(if (= ~a ~b)
                       ~f
-                      (throw (Exception. "matching error")))))
+                      (throw (PatternMatchException.)))))
 
 
 (defmacro case [v & ps]
@@ -124,7 +127,7 @@
           pr# (first (rest ps))
           psp# (drop 2 ps)]
       `(try (match ~p# ~v ~pr#)
-            (catch Exception e# (case ~v ~@psp#))))))
+            (catch PatternMatchException e# (case ~v ~@psp#))))))
 
 
 ;; tests
@@ -138,7 +141,7 @@
 (deftest contradiction-match-test
   (is (= false
          (try (match true false true)
-              (catch Exception e false)))))
+              (catch PatternMatchException e false)))))
 
 (deftest single-assignation-test
   (is (= 1
@@ -194,10 +197,10 @@
          (match [1 2] [1 2] true)))
   (is (= false
          (try (match [2 3] [1 2] true)
-              (catch Exception e false))))
+              (catch PatternMatchException e false))))
   (is (= false
          (try (match [1 2] (1 2) true)
-              (catch Exception e false)))))
+              (catch PatternMatchException e false)))))
 
 (deftest match-vectors-complex-test
   (is (= 1
@@ -224,4 +227,16 @@
            (match {:a a} m a))))
   (is (= false
          (try (match {:a 2} {:a 1} true)
-              (catch Exception e false)))))
+              (catch PatternMatchException e false)))))
+
+(deftest excetions-1-test
+  (is (= true
+         (try
+          (try (match true false 0)
+               (catch PatternMatchException e1 true))
+          (catch Exception e2 false))))
+  (is (= false
+         (try
+          (try (match true true (throw (Exception.)))
+               (catch PatternMatchException e1 true))
+          (catch Exception e2 false)))))

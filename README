@@ -48,6 +48,8 @@ There are some tests included in the tuples.clj file. You can run them with 'mvn
 
 == Changelog
 
-- version 0.1 (9/28/2009): First version.
-- version 0.2 (9/29/2009): Added support for matching vectors.
-- version 0.3 (9/29/2009): Initial support for matching maps.
+- version 0.1   (09/28/2009): First version.
+- version 0.2   (09/29/2009): Added support for matching vectors.
+- version 0.3   (09/29/2009): Initial support for matching maps.
+- version 0.3.1 (10/02/2009): Fixed error in exception handling. Now errors not involving
+                              pattern matching are not cought.
