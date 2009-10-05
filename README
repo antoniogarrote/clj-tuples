@@ -53,3 +53,5 @@ There are some tests included in the tuples.clj file. You can run them with 'mvn
 - version 0.3   (09/29/2009): Initial support for matching maps.
 - version 0.3.1 (10/02/2009): Fixed error in exception handling. Now errors not involving
                               pattern matching are not cought.
+-version 0.3.2  (10/05/2009): Fixed error with comparing patterns consisting of lists with
+                              different number of elements.

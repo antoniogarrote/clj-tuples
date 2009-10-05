@@ -108,10 +108,20 @@
                             (let [~a ~b]
                               ~f))))
                      `~f)
-     (list? a)     `(match-lists ~f ~b (count '~a) ~@a)
+     (list? a)     (if (list? b)
+                     `(if (= (count '~a) (count '~b))
+                        (match-lists ~f ~b (count '~a) ~@a)
+                        (throw (PatternMatchException.)))
+                     `(if (= (count '~a)  (try (count ~b)
+                                               (catch Exception e# (throw (PatternMatchException.)))))
+                        (match-lists ~f ~b (count '~a) ~@a)
+                        (throw (PatternMatchException.))))
+
      (vector? a)   `(match-vectors ~f ~b ~a)
+
      (map? a)      (let [ks (keys a)]
                      `(match-maps ~f ~b ~a ~@ks))
+
      true          `(if (= ~a ~b)
                       ~f
                       (throw (PatternMatchException.)))))
@@ -178,6 +188,20 @@
                  (b 1) (list b :a)
                  (b 2) (list b :b))))))
 
+(deftest case-b-test
+  (let [a 1]
+    (is (= '(2 :b)
+           (case (:ok 2)
+                 (:ok a b) (list b :a)
+                 (:ok b)   (list b :b))))))
+
+(deftest case-c-test
+  (let [a 1]
+    (is (= '(2 :b)
+           (case (:ok 2)
+                 "ok"      (list :a)
+                 (:ok b)   (list b :b))))))
+
 (deftest dont-care-pattern-test
   (is (= 2
          (match (_ b) ((1 3) 2) b)))
@@ -229,7 +253,7 @@
          (try (match {:a 2} {:a 1} true)
               (catch PatternMatchException e false)))))
 
-(deftest excetions-1-test
+(deftest exceptions-1-test
   (is (= true
          (try
           (try (match true false 0)
