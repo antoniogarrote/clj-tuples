@@ -2,15 +2,15 @@ Suppport for pattern matching in Clojure.
 
 == Installation
 
-- Set up Clojure POM (http://github.com/technomancy/clojure-pom)
-- Clone the project
-- Compile, test, install with maven:
+- The project uses Leiningen to manage the build.
+- The project is published at Clojars
 
-mvn process-resources ; # <- now your are ready for emacs slime
-mvn compile           ; # <- see it compile your clojure code
-mvn test              ; # <- see it test your clojure code
-mvn install           ; # <- install a jar for other components
-mvn assembly:assembly ; # <- build one big jar
+To build from source, after installing leiningen execute:
+
+$lein deps
+$lein compile-java
+$lein compile
+$lein jar
 
 == Use
 
@@ -20,7 +20,7 @@ The macro 'match' accepts a pattern a value and an action, matches the pattern a
 extracts the component values and executes the action form:
 
 ;; (tuples/match pattern value action)
->(tuples/match (a b (c d) e) (1 2 (3 4) 5) (+ b e))
+>(clj-tuples/match (a b (c d) e) (1 2 (3 4) 5) (+ b e))
 7
 
 
@@ -28,7 +28,7 @@ The macro 'case' does pattern matching of several patterns and actions agains a 
 
 ;; (tuples/case value (pattern1 action1) (pattern2 action2) ... (patternn actionn))
 >(def *test* '(:ok 2))
->(tuples/case *test*
+>(clj-tuples/case *test*
               (s 1) (do (println (str "the state is not ok: " s)) s)
               (s 2) (do (println (str "the state is ok: " s)) s)
               t     (println (str "unknown value")))
@@ -37,14 +37,16 @@ the state is ok: :ok
 
 You can use symbols starting with '_' for the parts of the value you are not interested:
 
-(tuples/match (_ _ x) (1 2 3) x)
+(clj-tuples/match (_ _ x) (1 2 3) x)
 >3
-(tuples/match (_a _b x) (1 2 3) x)
+(clj-tuples/match (_a _b x) (1 2 3) x)
 >3
 
 == Tests
 
-There are some tests included in the tuples.clj file. You can run them with 'mvn test'
+There are some tests included in the project. You can run them using Leiningen:
+
+$lein test
 
 == Changelog
 
@@ -55,3 +57,4 @@ There are some tests included in the tuples.clj file. You can run them with 'mvn
                               pattern matching are not cought.
 -version 0.3.2  (10/05/2009): Fixed error with comparing patterns consisting of lists with
                               different number of elements.
+-version 0.3.3  (12/08/2009): Packaged for leiningen.

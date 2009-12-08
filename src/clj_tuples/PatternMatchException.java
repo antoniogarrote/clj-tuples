@@ -1,4 +1,4 @@
-package org.clj_tuples;
+package clj_tuples;
 
 public class PatternMatchException extends Exception {
 
